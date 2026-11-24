@@ -1,4 +1,4 @@
-package com.example.foodmorrow_app
+package com.kavaup.foodmorrow
 
 import io.flutter.embedding.android.FlutterActivity
 
