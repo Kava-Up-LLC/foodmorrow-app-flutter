@@ -10,7 +10,7 @@ Flutter (iOS + Android) on **AppAmbit** — Database, Cloud Code, Analytics and 
 |---|---|
 | `AGENTS.md` | Rules for coding agents |
 | `DESIGN.md` · `design/screens/` | The look and the approved screens |
-| `prompts.md` | The prompts the app is built with |
+| `prompts.md` | The one prompt the app is built with |
 | `cloud_functions/` | The five Cloud Code functions, the schema and their tests (`cloud_functions/README.md`) |
 | `assets/` | Plus Jakarta Sans (OFL) and the food photo library (Unsplash License, see `assets/food/CREDITS.md`) |
 | `docs/tech/foodmorrow/` | Tech spec and user stories (local, not versioned) |

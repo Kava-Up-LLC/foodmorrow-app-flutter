@@ -25,7 +25,7 @@ App 04 of the "7 apps in 7 days" series. **No notifications** (decided 2026-11-2
 | **`docs/tech/foodmorrow/tech_foodmorrow.md`** | Everything: scope (6 features, nothing more), rules, data model, the cloud functions, folder structure, how state works, screens, acceptance criteria, risks. |
 | `docs/tech/foodmorrow/hus_foodmorrow.md` | The user stories with Given/When/Then acceptance criteria. |
 | `DESIGN.md` + `design/screens/*.png` | The look: tokens, components and the 10 approved screens. Open the PNGs before building a screen. |
-| `prompts.md` | The prompts the app is built with, one per part. |
+| `prompts.md` | The one prompt the app is built with. |
 
 Build only what the spec describes. If something is missing or unclear, ask — don't invent features.
 
