@@ -4,6 +4,14 @@ Guide for any coding agent (Claude Code, Codex, Cursor…) working in this repo.
 Behavioral guidelines in the parent `../CLAUDE.md` (apps_cms) apply here too: think first, keep it simple,
 touch only what you must, verify.
 
+## Documento activo
+
+| | |
+|---|---|
+| **Documento** | `docs/tech/foodmorrow/tech_foodmorrow.md` (+ `hus_foodmorrow.md`) |
+| **Objetivo** | Foodmorrow completo: backend en AppAmbit y la app Flutter de las 6 features, lista para el video. |
+| **Fase actual** | **Fase 4 — Prueba final hecha** (2026-11-24). Backend y app completos y validados contra AppAmbit real en simulador iOS y emulador Android. Falta tu visto bueno en el board y las 3 pruebas que piden teléfono físico (ver "Final results" en `hus_foodmorrow.md`). |
+
 ## What this is
 
 Foodmorrow — orders for people who sell homemade food. Log every order in seconds; Home tells you exactly what to make
