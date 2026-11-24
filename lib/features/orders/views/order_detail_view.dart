@@ -7,6 +7,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/widgets/shimmer.dart';
 import '../../../core/widgets/food_photo.dart';
 import '../data/order.dart';
 import '../order_detail_controller.dart';
@@ -113,9 +114,7 @@ class _OrderDetailViewState extends State<OrderDetailView> {
                           const SizedBox(height: Shapes.gap),
                         ],
                         if (order == null) ...[
-                          const Skeleton(height: 220),
-                          const SizedBox(height: Shapes.gap),
-                          const Skeleton(height: 120),
+                          const _OrderDetailSkeleton(),
                         ] else ...[
                           _CustomerCard(order: order, onEdit: _controller.busy ? null : _edit),
                           if (order.hasNote) ...[
@@ -149,6 +148,93 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The same three blocks the real screen has: who, what, and where the order is up to.
+class _OrderDetailSkeleton extends StatelessWidget {
+  const _OrderDetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        SkeletonCard(
+          padding: EdgeInsets.all(14),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  SkeletonCircle(size: 48),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkeletonLine(width: 160, height: 16),
+                        SizedBox(height: 6),
+                        SkeletonLine(width: 120, height: 11),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              SkeletonBox(height: 44, radius: 8),
+              SizedBox(height: 16),
+              _DetailLineSkeleton(),
+              SizedBox(height: 14),
+              _DetailLineSkeleton(),
+            ],
+          ),
+        ),
+        SizedBox(height: Shapes.gap),
+        SkeletonCard(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            children: [
+              _TimelineRowSkeleton(),
+              SizedBox(height: 16),
+              _TimelineRowSkeleton(),
+              SizedBox(height: 16),
+              _TimelineRowSkeleton(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailLineSkeleton extends StatelessWidget {
+  const _DetailLineSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        SkeletonCircle(size: 48),
+        SizedBox(width: 14),
+        Expanded(child: SkeletonLine(width: 140, height: 15)),
+        SkeletonLine(width: 34, height: 15),
+      ],
+    );
+  }
+}
+
+class _TimelineRowSkeleton extends StatelessWidget {
+  const _TimelineRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        SkeletonCircle(size: 20),
+        SizedBox(width: 12),
+        Expanded(child: SkeletonLine(width: 150, height: 14)),
+        SkeletonLine(width: 52, height: 11),
+      ],
     );
   }
 }

@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/food_photo.dart';
+import '../../../core/widgets/shimmer.dart';
 import '../../menu/views/item_form_view.dart';
 import '../data/order.dart';
 import '../order_draft.dart';
@@ -35,8 +36,9 @@ class _OrderFormViewState extends State<OrderFormView> {
     editing: widget.editing,
   )..load();
 
-  late final TextEditingController _customer =
-      TextEditingController(text: widget.editing?.customer ?? '');
+  late final TextEditingController _customer = TextEditingController(
+    text: widget.editing?.customer ?? '',
+  );
   late final TextEditingController _note = TextEditingController(text: widget.editing?.note ?? '');
 
   @override
@@ -75,9 +77,9 @@ class _OrderFormViewState extends State<OrderFormView> {
   }
 
   Future<void> _addFirstItem() async {
-    final added = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => ItemFormView(services: widget.services)),
-    );
+    final added = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => ItemFormView(services: widget.services)));
     if (added == true) await _controller.load();
   }
 
@@ -99,7 +101,9 @@ class _OrderFormViewState extends State<OrderFormView> {
                       if (_controller.failure != null) ...[
                         AlertBanner(
                           failure: _controller.failure!,
-                          onRetry: _controller.loading ? _controller.load : _controller.clearFailure,
+                          onRetry: _controller.loading
+                              ? _controller.load
+                              : _controller.clearFailure,
                         ),
                         const SizedBox(height: Shapes.gap),
                       ],
@@ -130,11 +134,9 @@ class _OrderFormViewState extends State<OrderFormView> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        if (_controller.loading) ...[
-                          const Skeleton(height: 76, radius: 18),
-                          const SizedBox(height: 10),
-                          const Skeleton(height: 76, radius: 18),
-                        ] else
+                        if (_controller.loading)
+                          const _ProductRowsSkeleton()
+                        else
                           for (final product in _controller.products) ...[
                             AppCard(
                               radius: Shapes.tile,
@@ -189,6 +191,48 @@ class _OrderFormViewState extends State<OrderFormView> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// Three rows in the shape of the real product rows: photo, name, stepper.
+class _ProductRowsSkeleton extends StatelessWidget {
+  const _ProductRowsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        _ProductRowSkeleton(),
+        SizedBox(height: 10),
+        _ProductRowSkeleton(),
+        SizedBox(height: 10),
+        _ProductRowSkeleton(),
+      ],
+    );
+  }
+}
+
+class _ProductRowSkeleton extends StatelessWidget {
+  const _ProductRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      radius: 18,
+      padding: EdgeInsets.fromLTRB(12, 10, 12, 10),
+      child: Row(
+        children: [
+          SkeletonCircle(size: 52),
+          SizedBox(width: 14),
+          Expanded(child: SkeletonLine(width: 130, height: 15)),
+          SkeletonBox(height: 32, width: 32, radius: 10),
+          SizedBox(width: 12),
+          SkeletonLine(width: 18, height: 15),
+          SizedBox(width: 12),
+          SkeletonBox(height: 32, width: 32, radius: 10),
+        ],
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foodmorrow_app/app.dart';
@@ -5,6 +7,7 @@ import 'package:foodmorrow_app/app_services.dart';
 import 'package:foodmorrow_app/core/dates.dart';
 import 'package:foodmorrow_app/core/errors.dart';
 import 'package:foodmorrow_app/core/widgets/floating_tab_bar.dart';
+import 'package:foodmorrow_app/core/widgets/shimmer.dart';
 import 'package:foodmorrow_app/features/home/data/home_data.dart';
 import 'package:foodmorrow_app/features/menu/data/product.dart';
 import 'package:foodmorrow_app/features/orders/data/order.dart';
@@ -14,24 +17,123 @@ import 'fakes.dart';
 void main() {
   /// The three orders of spec §9, the way Home gets them back.
   HomeData fiftyTwoThings({List<Pickup> pickups = const []}) => homeData(
-        tomorrowItems: const [
-          MakeItem(name: 'Cookies', photo: 'cookies', qty: 48, orders: 3),
-          MakeItem(name: 'Chocolate cake', photo: 'chocolate_cake', qty: 3, orders: 2),
-          MakeItem(name: 'Lasagna', photo: 'lasagna', qty: 1, orders: 1),
-        ],
-        pickups: pickups,
-      );
+    tomorrowItems: const [
+      MakeItem(name: 'Cookies', photo: 'cookies', qty: 48, orders: 3),
+      MakeItem(name: 'Chocolate cake', photo: 'chocolate_cake', qty: 3, orders: 2),
+      MakeItem(name: 'Lasagna', photo: 'lasagna', qty: 1, orders: 1),
+    ],
+    pickups: pickups,
+  );
 
   /// Draws the app at phone width and tall enough that a screen's content is all on show, so the
   /// tests are about what the screen says, not about scrolling.
+  ///
+  /// Animations are off: the loading shimmer repeats for ever, so with it running `pumpAndSettle`
+  /// would never return. Off is also the branch a phone with "reduce motion" takes.
   Future<void> pumpApp(WidgetTester tester, AppServices services) async {
     tester.view.physicalSize = const Size(390 * 3, 1700 * 3);
     tester.view.devicePixelRatio = 3;
+    tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(App(services: services));
     await tester.pumpAndSettle();
   }
+
+  group('Loading', () {
+    /// A repository that only answers when the test says so, to hold a screen in its loading state.
+    testWidgets('every tab shows shimmering placeholders while it reads', (tester) async {
+      final home = SlowHomeRepository(fiftyTwoThings());
+      final menu = SlowMenuRepository();
+      final orders = SlowOrdersRepository();
+      final settings = SlowSettingsRepository();
+      final services = fakeServices(home: home, menu: menu, orders: orders, settings: settings);
+
+      await tester.pumpWidget(App(services: services));
+      await tester.pump();
+
+      // Home, before the answer lands.
+      expect(find.byType(Shimmer), findsWidgets, reason: 'Home');
+      expect(find.text('52 things\nto make'), findsNothing);
+      // The business name is a placeholder, not the default, so it cannot pop into something else.
+      expect(find.text('My kitchen'), findsNothing);
+
+      for (final tab in const ['Orders', 'Menu', 'Settings']) {
+        await tester.tap(find.bySemanticsLabel(tab));
+        await tester.pump();
+        expect(find.byType(Shimmer), findsWidgets, reason: tab);
+      }
+
+      // Let every screen finish so the test can end.
+      home.release();
+      menu.release();
+      orders.release();
+      settings.release();
+      await tester.pumpAndSettle();
+      expect(find.byType(Shimmer), findsNothing);
+    });
+
+    testWidgets('the app draws before the cloud answers anything', (tester) async {
+      // Nothing is released: every call is still in flight. The app must already be on screen,
+      // or a slow start would leave the phone blank (seen on the simulator, 2026-11-24).
+      final home = SlowHomeRepository(fiftyTwoThings());
+      final menu = SlowMenuRepository();
+      final orders = SlowOrdersRepository();
+      final settings = SlowSettingsRepository();
+      final services = fakeServices(home: home, menu: menu, orders: orders, settings: settings);
+      unawaited(services.seller.hello());
+
+      await tester.pumpWidget(App(services: services));
+      await tester.pump();
+
+      expect(find.bySemanticsLabel('Home'), findsOneWidget, reason: 'the tab bar is up');
+      expect(find.byType(Shimmer), findsWidgets, reason: 'with placeholders, not a blank screen');
+
+      home.release();
+      menu.release();
+      orders.release();
+      settings.release();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('the week strip follows the week start when hello lands', (tester) async {
+      final settings = SlowSettingsRepository(weekStart: 'sun');
+      final services = fakeServices(orders: FakeOrdersRepository(), settings: settings);
+      unawaited(services.seller.hello());
+
+      await tester.pumpWidget(App(services: services));
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Orders'));
+      await tester.pumpAndSettle();
+      // Before the answer, the strip uses the default, Monday.
+      expect(find.text(Dates.weekdayShort(Dates.startOfWeek(Dates.today(), 'mon'))), findsWidgets);
+
+      settings.release();
+      await tester.pumpAndSettle();
+
+      final sunday = Dates.startOfWeek(Dates.today(), 'sun');
+      expect(find.text('${sunday.day}'), findsWidgets, reason: 'the strip now starts on Sunday');
+    });
+
+    testWidgets('the placeholders stand still when the phone asks for less motion', (tester) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(
+        disableAnimations: true,
+      );
+      final home = SlowHomeRepository(fiftyTwoThings());
+      await tester.pumpWidget(App(services: fakeServices(home: home)));
+      await tester.pump();
+
+      expect(find.byType(Shimmer), findsWidgets);
+      // Nothing is animating, so the tree settles even though it is still loading.
+      await tester.pumpAndSettle();
+      expect(find.byType(Shimmer), findsWidgets);
+
+      home.release();
+      await tester.pumpAndSettle();
+    });
+  });
 
   group('Home', () {
     testWidgets('answers what to make tomorrow (HU-07 CA1)', (tester) async {
@@ -73,20 +175,24 @@ void main() {
     });
 
     testWidgets('a pickup can be ticked off from Home (HU-06 CA1)', (tester) async {
-      final home = FakeHomeRepository(fiftyTwoThings(pickups: const [
-        Pickup(
-          id: 'o-marta',
-          customer: 'Marta Gil',
-          pickedUp: false,
-          items: [PickupLine(name: 'Brownies', photo: 'brownies', qty: 6)],
+      final home = FakeHomeRepository(
+        fiftyTwoThings(
+          pickups: const [
+            Pickup(
+              id: 'o-marta',
+              customer: 'Marta Gil',
+              pickedUp: false,
+              items: [PickupLine(name: 'Brownies', photo: 'brownies', qty: 6)],
+            ),
+            Pickup(
+              id: 'o-jorge',
+              customer: 'Jorge Paz',
+              pickedUp: true,
+              items: [PickupLine(name: 'Cookies', photo: 'cookies', qty: 12)],
+            ),
+          ],
         ),
-        Pickup(
-          id: 'o-jorge',
-          customer: 'Jorge Paz',
-          pickedUp: true,
-          items: [PickupLine(name: 'Cookies', photo: 'cookies', qty: 12)],
-        ),
-      ]));
+      );
       final orders = FakeOrdersRepository();
       await pumpApp(tester, fakeServices(home: home, orders: orders));
 
@@ -123,18 +229,28 @@ void main() {
   group('Orders', () {
     testWidgets('shows the day strip and the orders of the day (HU-05 CA2)', (tester) async {
       final tomorrow = Dates.tomorrow();
-      final orders = FakeOrdersRepository(days: [
-        DayOrders(date: tomorrow, orders: [
-          fakeOrder(
-            id: 'a',
-            customer: 'Laura Méndez',
-            items: const [
-              OrderLine(productId: 'p1', name: 'Cookies', photo: 'cookies', qty: 12),
-              OrderLine(productId: 'p2', name: 'Chocolate cake', photo: 'chocolate_cake', qty: 1),
+      final orders = FakeOrdersRepository(
+        days: [
+          DayOrders(
+            date: tomorrow,
+            orders: [
+              fakeOrder(
+                id: 'a',
+                customer: 'Laura Méndez',
+                items: const [
+                  OrderLine(productId: 'p1', name: 'Cookies', photo: 'cookies', qty: 12),
+                  OrderLine(
+                    productId: 'p2',
+                    name: 'Chocolate cake',
+                    photo: 'chocolate_cake',
+                    qty: 1,
+                  ),
+                ],
+              ),
             ],
           ),
-        ]),
-      ]);
+        ],
+      );
       await pumpApp(tester, fakeServices(orders: orders));
 
       await tester.tap(find.bySemanticsLabel('Orders'));
@@ -156,7 +272,9 @@ void main() {
     testWidgets('an order opens, and can be marked picked up (HU-06 CA3)', (tester) async {
       final order = fakeOrder(customer: 'Sofía Ramos', note: 'Birthday, no nuts');
       final orders = FakeOrdersRepository(
-        days: [DayOrders(date: Dates.today(), orders: [order])],
+        days: [
+          DayOrders(date: Dates.today(), orders: [order]),
+        ],
         order: order,
       );
       await pumpApp(tester, fakeServices(orders: orders));
@@ -184,7 +302,9 @@ void main() {
     testWidgets('deleting asks first, by name (HU-04 CA3)', (tester) async {
       final order = fakeOrder(customer: 'Sofía Ramos');
       final orders = FakeOrdersRepository(
-        days: [DayOrders(date: Dates.today(), orders: [order])],
+        days: [
+          DayOrders(date: Dates.today(), orders: [order]),
+        ],
         order: order,
       );
       await pumpApp(tester, fakeServices(orders: orders));
@@ -230,7 +350,9 @@ void main() {
       const Product(id: 'p2', name: 'Chocolate cake', photo: 'chocolate_cake', orders: 0),
     ];
 
-    testWidgets('opens on Tomorrow and saves what was tapped (HU-03 CA1, CA2, CA5)', (tester) async {
+    testWidgets('opens on Tomorrow and saves what was tapped (HU-03 CA1, CA2, CA5)', (
+      tester,
+    ) async {
       final orders = FakeOrdersRepository();
       final analytics = FakeAnalytics();
       await pumpApp(
@@ -272,10 +394,7 @@ void main() {
 
     testWidgets('Save is off until there is a customer and an item (HU-03 CA3)', (tester) async {
       final orders = FakeOrdersRepository();
-      await pumpApp(
-        tester,
-        fakeServices(menu: FakeMenuRepository(List.of(menu)), orders: orders),
-      );
+      await pumpApp(tester, fakeServices(menu: FakeMenuRepository(List.of(menu)), orders: orders));
 
       await tester.tap(find.byKey(newOrderButtonKey));
       await tester.pumpAndSettle();

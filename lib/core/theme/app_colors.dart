@@ -46,6 +46,9 @@ abstract final class AppColors {
   /// Loading and no-connection placeholders.
   static const skeleton = Color(0xFFE2EAE8);
 
+  /// The light band that sweeps across a [Shimmer] while something loads.
+  static const skeletonHighlight = Color(0xFFF3F8F7);
+
   /// A disabled stepper minus.
   static const disabledFill = Color(0xFFEDF1F0);
   static const disabledIcon = Color(0xFFA9B4B1);

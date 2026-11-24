@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:appambit_sdk_flutter/appambit_sdk_flutter.dart';
@@ -35,9 +36,11 @@ Future<void> main() async {
     platform: Platform.isIOS ? 'ios' : 'android',
     appVersion: appVersion,
   );
-  // Creates the seller the first time this phone is seen and reads their settings. It never
-  // throws: with no connection the app still opens, and each screen shows its own banner.
-  await services.seller.hello();
+  // Creates the seller the first time this phone is seen and reads their settings. It is NOT
+  // awaited: the first frame must never wait on the network, or a slow call leaves the phone
+  // staring at a white screen. Every screen loads its own data and shows its own placeholders,
+  // and the shell picks this up when it lands.
+  unawaited(services.seller.hello());
 
   runApp(App(services: services));
 }

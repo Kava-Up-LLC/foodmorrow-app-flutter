@@ -8,6 +8,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/widgets/shimmer.dart';
 import '../data/order.dart';
 import '../orders_controller.dart';
 import '../widgets/day_strip.dart';
@@ -72,9 +73,9 @@ class _OrdersViewState extends State<OrdersView> {
   }
 
   Future<void> _openSearch() async {
-    final picked = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => SearchView(services: widget.services)),
-    );
+    final picked = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => SearchView(services: widget.services)));
     if (picked == null || !mounted) return;
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -93,12 +94,7 @@ class _OrdersViewState extends State<OrdersView> {
         builder: (context, _) {
           final orders = _controller.selectedOrders;
           return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              Shapes.side,
-              24,
-              Shapes.side,
-              Shapes.bottomInset,
-            ),
+            padding: const EdgeInsets.fromLTRB(Shapes.side, 24, Shapes.side, Shapes.bottomInset),
             children: [
               Row(
                 children: [
@@ -137,9 +133,7 @@ class _OrdersViewState extends State<OrdersView> {
                 const SizedBox(height: Shapes.gap),
               ],
               if (_controller.loading) ...[
-                const Skeleton(height: 150),
-                const SizedBox(height: Shapes.gap),
-                const Skeleton(height: 150),
+                const _OrdersSkeleton(),
               ] else ...[
                 Row(
                   children: [
@@ -165,6 +159,75 @@ class _OrdersViewState extends State<OrdersView> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// The day heading and two order cards, in the shape of the real ones.
+class _OrdersSkeleton extends StatelessWidget {
+  const _OrdersSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Shimmer(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [SkeletonLine(width: 200, height: 18), SkeletonLine(width: 64, height: 12)],
+          ),
+        ),
+        SizedBox(height: 14),
+        _OrderCardSkeleton(),
+        SizedBox(height: Shapes.gap),
+        _OrderCardSkeleton(),
+      ],
+    );
+  }
+}
+
+class _OrderCardSkeleton extends StatelessWidget {
+  const _OrderCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      padding: EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              SkeletonCircle(size: 40),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLine(width: 150, height: 15),
+                    SizedBox(height: 6),
+                    SkeletonLine(width: 70, height: 11),
+                  ],
+                ),
+              ),
+              SkeletonBox(height: 28, width: 86, radius: 14),
+            ],
+          ),
+          SizedBox(height: 18),
+          Row(
+            children: [
+              SkeletonCircle(size: 30),
+              SizedBox(width: 8),
+              SkeletonLine(width: 96, height: 13),
+              SizedBox(width: 18),
+              SkeletonCircle(size: 30),
+              SizedBox(width: 8),
+              SkeletonLine(width: 120, height: 13),
+            ],
+          ),
+        ],
       ),
     );
   }

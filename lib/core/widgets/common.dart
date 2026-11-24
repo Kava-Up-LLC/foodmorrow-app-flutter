@@ -91,11 +91,7 @@ class _StepButton extends StatelessWidget {
             child: InkWell(
               borderRadius: Shapes.small,
               onTap: onPressed,
-              child: SizedBox(
-                width: 32,
-                height: 32,
-                child: Icon(icon, size: 20, color: iconColor),
-              ),
+              child: SizedBox(width: 32, height: 32, child: Icon(icon, size: 20, color: iconColor)),
             ),
           ),
         ),
@@ -141,7 +137,12 @@ class StatusChip extends StatelessWidget {
 
 /// The round check of a pickup row: grey outline waiting, green filled when picked up.
 class PickupCheck extends StatelessWidget {
-  const PickupCheck({super.key, required this.pickedUp, required this.onPressed, required this.customer});
+  const PickupCheck({
+    super.key,
+    required this.pickedUp,
+    required this.onPressed,
+    required this.customer,
+  });
 
   final bool pickedUp;
   final VoidCallback? onPressed;
@@ -161,7 +162,11 @@ class PickupCheck extends StatelessWidget {
         child: Center(
           child: Material(
             color: pickedUp ? AppColors.green : AppColors.surface,
-            shape: CircleBorder(side: pickedUp ? BorderSide.none : const BorderSide(color: AppColors.line, width: 1.5)),
+            shape: CircleBorder(
+              side: pickedUp
+                  ? BorderSide.none
+                  : const BorderSide(color: AppColors.line, width: 1.5),
+            ),
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: onPressed,
@@ -235,7 +240,9 @@ class AppTextField extends StatelessWidget {
         border: OutlineInputBorder(borderRadius: Shapes.tile, borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(
           borderRadius: Shapes.tile,
-          borderSide: dashed ? const BorderSide(color: AppColors.line, width: 1.5) : BorderSide.none,
+          borderSide: dashed
+              ? const BorderSide(color: AppColors.line, width: 1.5)
+              : BorderSide.none,
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: Shapes.tile,
@@ -289,27 +296,6 @@ class AlertBanner extends StatelessWidget {
   }
 }
 
-/// The grey placeholders a screen shows while it loads, and under the No connection banner.
-class Skeleton extends StatelessWidget {
-  const Skeleton({super.key, required this.height, this.width = double.infinity, this.radius = 22});
-
-  final double height;
-  final double width;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      width: width,
-      decoration: BoxDecoration(
-        color: AppColors.skeleton,
-        borderRadius: BorderRadius.circular(radius),
-      ),
-    );
-  }
-}
-
 /// Section header: "For tomorrow", with an optional green link on the right.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title, this.action, this.onAction, this.trailing});
@@ -333,10 +319,7 @@ class SectionHeader extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                child: Text(
-                  action!,
-                  style: AppText.body.copyWith(color: AppColors.greenText),
-                ),
+                child: Text(action!, style: AppText.body.copyWith(color: AppColors.greenText)),
               ),
             ),
         ],
@@ -383,5 +366,4 @@ class ScreenTopBar extends StatelessWidget {
 
 /// Takes away any message still floating at the bottom before a screen with a bottom button
 /// opens — otherwise "Order saved" sits right on top of the next "Save order".
-void clearMessages(BuildContext context) =>
-    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+void clearMessages(BuildContext context) => ScaffoldMessenger.of(context).removeCurrentSnackBar();

@@ -54,6 +54,24 @@ class HomeShellState extends State<HomeShell> {
   /// The day Orders is on, remembered across tab switches.
   DateTime? _ordersDay;
 
+  @override
+  void initState() {
+    super.initState();
+    // `hello` lands after the first frame, so the week start can change under us; the day strip
+    // has to follow it.
+    widget.services.seller.addListener(_sellerChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.services.seller.removeListener(_sellerChanged);
+    super.dispose();
+  }
+
+  void _sellerChanged() {
+    if (mounted) setState(() {});
+  }
+
   /// Something changed in the cloud: what is on screen must not show stale numbers.
   void reloadEverything() => setState(() => _revision++);
 
@@ -85,7 +103,9 @@ class HomeShellState extends State<HomeShell> {
     return switch (_tab) {
       AppTab.home => HomeView(key: ValueKey('home-$_revision'), services: services, shell: this),
       AppTab.orders => OrdersView(
-          key: ValueKey('orders-$_revision'),
+          // The week start is part of the key: when `hello` answers "sun", the strip is rebuilt
+          // to start on Sunday instead of staying on the default.
+          key: ValueKey('orders-$_revision-${services.weekStart}'),
           services: services,
           shell: this,
           initialDay: _ordersDay,

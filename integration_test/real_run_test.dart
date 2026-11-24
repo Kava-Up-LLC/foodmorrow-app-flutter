@@ -21,7 +21,7 @@ import 'package:foodmorrow_app/core/appambit/cloud_service.dart';
 import 'package:foodmorrow_app/core/appambit/diagnostics.dart';
 import 'package:foodmorrow_app/core/dates.dart';
 import 'package:foodmorrow_app/core/local_store.dart';
-import 'package:foodmorrow_app/core/widgets/common.dart';
+import 'package:foodmorrow_app/core/widgets/shimmer.dart';
 import 'package:foodmorrow_app/core/widgets/floating_tab_bar.dart';
 import 'package:foodmorrow_app/features/menu/views/item_form_view.dart';
 import 'package:foodmorrow_app/features/menu/views/menu_view.dart';
@@ -71,7 +71,11 @@ void main() {
       await waitFor(tester, find.byKey(itemNameFieldKey), 'the new item form');
       await tester.enterText(find.byKey(itemNameFieldKey), item.$1);
       await settle(tester);
-      await tapWhenReady(tester, find.byKey(ValueKey('pick_photo_${item.$2}')), 'the ${item.$2} photo');
+      await tapWhenReady(
+        tester,
+        find.byKey(ValueKey('pick_photo_${item.$2}')),
+        'the ${item.$2} photo',
+      );
       await tapWhenReady(tester, find.text('Add to menu'), 'Add to menu');
       // Back on the menu — the + only exists there, and the name alone would also match the
       // text still sitting in the form's field.
@@ -136,7 +140,10 @@ void main() {
     // ---------------------------------------------------------------- the orders of a day (HU-05)
     await tapWhenReady(tester, find.bySemanticsLabel('Orders'), 'the Orders tab');
     await tapWhenReady(
-        tester, find.bySemanticsLabel(RegExp('^${Dates.long(Dates.tomorrow())}')), "tomorrow's tile");
+      tester,
+      find.bySemanticsLabel(RegExp('^${Dates.long(Dates.tomorrow())}')),
+      "tomorrow's tile",
+    );
     await waitFor(tester, find.text('Laura'), "tomorrow's orders");
     expect(find.text('3 orders'), findsOneWidget);
     expect(find.text('Pedro'), findsOneWidget);
@@ -185,7 +192,10 @@ void main() {
     // ---------------------------------------------------------------- clean up after ourselves
     await tapWhenReady(tester, find.bySemanticsLabel('Orders'), 'the Orders tab');
     await tapWhenReady(
-        tester, find.bySemanticsLabel(RegExp('^${Dates.long(Dates.tomorrow())}')), "tomorrow's tile");
+      tester,
+      find.bySemanticsLabel(RegExp('^${Dates.long(Dates.tomorrow())}')),
+      "tomorrow's tile",
+    );
     for (final customer in const ['Laura', 'Pedro', 'Sofía']) {
       await tapWhenReady(tester, find.text(customer), "$customer's order");
       await tapWhenReady(tester, find.bySemanticsLabel('Delete order'), 'the delete button');
@@ -245,4 +255,4 @@ Future<void> settle(WidgetTester tester) async {
 }
 
 bool _isBusy(WidgetTester tester) =>
-    tester.any(find.byType(CircularProgressIndicator)) || tester.any(find.byType(Skeleton));
+    tester.any(find.byType(CircularProgressIndicator)) || tester.any(find.byType(Shimmer));

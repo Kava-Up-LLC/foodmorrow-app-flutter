@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:foodmorrow_app/app_services.dart';
 import 'package:foodmorrow_app/core/appambit/analytics.dart';
 import 'package:foodmorrow_app/core/appambit/cloud_service.dart';
@@ -99,12 +101,19 @@ class FakeMenuRepository implements MenuRepository {
   Future<List<Product>> add({required String name, required String? photo}) async {
     if (failWith != null) throw failWith!;
     added.add((name, photo));
-    products = [...products, Product(id: 'p${products.length + 1}', name: name, photo: photo, orders: 0)];
+    products = [
+      ...products,
+      Product(id: 'p${products.length + 1}', name: name, photo: photo, orders: 0),
+    ];
     return _answer();
   }
 
   @override
-  Future<List<Product>> edit({required String id, required String name, required String? photo}) async {
+  Future<List<Product>> edit({
+    required String id,
+    required String name,
+    required String? photo,
+  }) async {
     if (failWith != null) throw failWith!;
     edited.add((id, name, photo));
     products = [
@@ -262,10 +271,10 @@ Order fakeOrder({
 
 /// AppServices wired entirely with fakes.
 AppServices fakeServices({
-  FakeHomeRepository? home,
-  FakeMenuRepository? menu,
-  FakeOrdersRepository? orders,
-  FakeSettingsRepository? settings,
+  HomeRepository? home,
+  MenuRepository? menu,
+  OrdersRepository? orders,
+  SettingsRepository? settings,
   FakeAnalytics? analytics,
   FakeDiagnostics? diagnostics,
   FakeStore? store,
@@ -282,4 +291,106 @@ AppServices fakeServices({
     orders: orders ?? FakeOrdersRepository(),
     settings: settings ?? FakeSettingsRepository(),
   );
+}
+
+/// Repositories that hold their answer until [release] is called, so a test can look at a screen
+/// while it is still loading.
+mixin _Held<T> {
+  final _gate = Completer<void>();
+
+  /// Lets the pending call finish.
+  void release() {
+    if (!_gate.isCompleted) _gate.complete();
+  }
+
+  Future<void> get held => _gate.future;
+}
+
+class SlowHomeRepository with _Held<HomeData> implements HomeRepository {
+  SlowHomeRepository(this.data);
+
+  final HomeData data;
+
+  @override
+  Future<HomeData> load() async {
+    await held;
+    return data;
+  }
+}
+
+class SlowMenuRepository with _Held<List<Product>> implements MenuRepository {
+  @override
+  Future<List<Product>> list() async {
+    await held;
+    return const [];
+  }
+
+  @override
+  Future<List<Product>> add({required String name, required String? photo}) async => list();
+
+  @override
+  Future<List<Product>> edit({
+    required String id,
+    required String name,
+    required String? photo,
+  }) async => list();
+
+  @override
+  Future<List<Product>> remove(String id) async => list();
+}
+
+class SlowOrdersRepository with _Held<void> implements OrdersRepository {
+  @override
+  Future<List<DayOrders>> week({required DateTime from, required DateTime to}) async {
+    await held;
+    return [
+      for (var d = from; !d.isAfter(to); d = d.add(const Duration(days: 1)))
+        DayOrders(date: d, orders: const []),
+    ];
+  }
+
+  @override
+  Future<List<SearchHit>> search(String query) async {
+    await held;
+    return const [];
+  }
+
+  @override
+  Future<Order> get(String id) async {
+    await held;
+    return fakeOrder(id: id);
+  }
+
+  @override
+  Future<String> save({
+    String? id,
+    required String customer,
+    required DateTime pickupDate,
+    required String? note,
+    required Map<String, int> quantities,
+  }) async {
+    await held;
+    return id ?? 'new-order';
+  }
+
+  @override
+  Future<void> setPickedUp({required String id, required bool pickedUp}) => held;
+
+  @override
+  Future<void> delete(String id) => held;
+}
+
+class SlowSettingsRepository with _Held<SellerProfile> implements SettingsRepository {
+  SlowSettingsRepository({this.weekStart = 'mon'});
+
+  final String weekStart;
+
+  @override
+  Future<SellerProfile> hello() async {
+    await held;
+    return SellerProfile(businessName: "Ana's Kitchen", weekStart: weekStart);
+  }
+
+  @override
+  Future<SellerProfile> save({String? businessName, String? weekStart}) => hello();
 }

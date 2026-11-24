@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/widgets/shimmer.dart';
 import '../data/order.dart';
 import '../data/orders_repository.dart';
 import '../widgets/order_card.dart';
@@ -99,7 +100,15 @@ class _SearchViewState extends State<SearchView> {
                         const SizedBox(height: Shapes.gap),
                       ],
                       if (_controller.busy)
-                        const Skeleton(height: 150)
+                        const Shimmer(
+                          child: Column(
+                            children: [
+                              SkeletonLine(width: 90, height: 12),
+                              SizedBox(height: 12),
+                              SkeletonBox(height: 140),
+                            ],
+                          ),
+                        )
                       else if (_controller.query.isEmpty)
                         Text(
                           'Type a name to find upcoming orders.',

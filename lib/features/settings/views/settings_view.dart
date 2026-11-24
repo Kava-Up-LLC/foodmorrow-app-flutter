@@ -7,6 +7,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/food_photo.dart';
+import '../../../core/widgets/shimmer.dart';
 import '../settings_controller.dart';
 
 /// Settings: the business card, the week start, the time zone, Help and the version (screen 09).
@@ -101,9 +102,18 @@ class _SettingsViewState extends State<SettingsView> {
               Text('Help', style: AppText.title),
               const SizedBox(height: 16),
               for (final tip in const [
-                ('Set up your menu once', 'Add what you sell with a photo. Then every order is just + and −.'),
-                ('Write orders down as they arrive', 'Tap the green + , pick the day, add the quantities. It takes seconds.'),
-                ('Open Home in the morning', 'It tells you everything to make tomorrow, added up across all your orders.'),
+                (
+                  'Set up your menu once',
+                  'Add what you sell with a photo. Then every order is just + and −.',
+                ),
+                (
+                  'Write orders down as they arrive',
+                  'Tap the green + , pick the day, add the quantities. It takes seconds.',
+                ),
+                (
+                  'Open Home in the morning',
+                  'It tells you everything to make tomorrow, added up across all your orders.',
+                ),
               ]) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 14),
@@ -140,68 +150,87 @@ class _SettingsViewState extends State<SettingsView> {
                 AlertBanner(failure: _controller.failure!, onRetry: _controller.load),
                 const SizedBox(height: Shapes.gap),
               ],
-              AppCard(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                child: Row(
-                  children: [
-                    InitialAvatar(name: _controller.businessName, size: 56),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _controller.businessName,
-                            style: AppText.bodyLarge.copyWith(fontWeight: FontWeight.w800),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+              if (_controller.loading)
+                const _SettingsSkeleton()
+              else ...[
+                AppCard(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  child: Row(
+                    children: [
+                      InitialAvatar(name: _controller.businessName, size: 56),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _controller.businessName,
+                              style: AppText.bodyLarge.copyWith(fontWeight: FontWeight.w800),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text('Shown at the top of Home', style: AppText.small),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _controller.busy ? null : _editName,
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+                          child: Text(
+                            'Edit',
+                            style: AppText.body.copyWith(color: AppColors.greenText),
                           ),
-                          Text('Shown at the top of Home', style: AppText.small),
-                        ],
+                        ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: _controller.busy ? null : _editName,
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-                        child: Text('Edit', style: AppText.body.copyWith(color: AppColors.greenText)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Shapes.gap),
+                AppCard(
+                  child: Column(
+                    children: [
+                      _SettingRow(
+                        label: 'Week starts on',
+                        value: _controller.startsOnSunday ? 'Sunday' : 'Monday',
+                        onTap: _controller.busy ? null : _editWeekStart,
                       ),
-                    ),
-                  ],
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.line,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
+                      // The phone's zone: the app follows it, there is nothing to choose.
+                      _SettingRow(label: 'Time zone', value: _timeZone(), onTap: null),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: Shapes.gap),
-              AppCard(
-                child: Column(
-                  children: [
-                    _SettingRow(
-                      label: 'Week starts on',
-                      value: _controller.startsOnSunday ? 'Sunday' : 'Monday',
-                      onTap: _controller.busy ? null : _editWeekStart,
-                    ),
-                    const Divider(height: 1, thickness: 1, color: AppColors.line, indent: 16, endIndent: 16),
-                    // The phone's zone: the app follows it, there is nothing to choose.
-                    _SettingRow(label: 'Time zone', value: _timeZone(), onTap: null),
-                  ],
+                const SizedBox(height: Shapes.gap),
+                AppCard(
+                  child: Column(
+                    children: [
+                      _SettingRow(label: 'Help', value: '', onTap: _showHelp),
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.line,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
+                      _SettingRow(label: 'Version', value: widget.services.appVersion, onTap: null),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: Shapes.gap),
-              AppCard(
-                child: Column(
-                  children: [
-                    _SettingRow(label: 'Help', value: '', onTap: _showHelp),
-                    const Divider(height: 1, thickness: 1, color: AppColors.line, indent: 16, endIndent: 16),
-                    _SettingRow(label: 'Version', value: widget.services.appVersion, onTap: null),
-                  ],
+                const SizedBox(height: 14),
+                Text(
+                  'Your orders are saved in the cloud, so they are safe if you change phones.',
+                  style: AppText.bodyRegular.copyWith(color: AppColors.muted),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                'Your orders are saved in the cloud, so they are safe if you change phones.',
-                style: AppText.bodyRegular.copyWith(color: AppColors.muted),
-              ),
+              ],
             ],
           );
         },
@@ -314,6 +343,65 @@ class _BusinessNameDialogState extends State<_BusinessNameDialog> {
           child: Text('Save', style: AppText.body.copyWith(color: AppColors.greenText)),
         ),
       ],
+    );
+  }
+}
+
+/// Settings while it reads the seller: the business card and the two groups of rows, so the name
+/// does not flick from the default to the real one.
+class _SettingsSkeleton extends StatelessWidget {
+  const _SettingsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        SkeletonCard(
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 14),
+          child: Row(
+            children: [
+              SkeletonCircle(size: 56),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLine(width: 150, height: 16),
+                    SizedBox(height: 7),
+                    SkeletonLine(width: 180, height: 11),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: Shapes.gap),
+        SkeletonCard(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          child: Column(
+            children: [_SettingRowSkeleton(), SizedBox(height: 36), _SettingRowSkeleton()],
+          ),
+        ),
+        SizedBox(height: Shapes.gap),
+        SkeletonCard(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          child: Column(
+            children: [_SettingRowSkeleton(), SizedBox(height: 36), _SettingRowSkeleton()],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SettingRowSkeleton extends StatelessWidget {
+  const _SettingRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [SkeletonLine(width: 130, height: 15), SkeletonLine(width: 80, height: 13)],
     );
   }
 }

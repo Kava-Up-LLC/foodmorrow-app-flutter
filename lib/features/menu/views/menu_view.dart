@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/buttons.dart';
 import '../../../core/widgets/common.dart';
 import '../../../core/widgets/food_photo.dart';
+import '../../../core/widgets/shimmer.dart';
 import '../data/product.dart';
 import '../menu_controller.dart';
 import 'item_form_view.dart';
@@ -28,7 +29,8 @@ class MenuView extends StatefulWidget {
 }
 
 class _MenuViewState extends State<MenuView> {
-  late final MenuListController _controller = MenuListController(repository: widget.services.menu)..load();
+  late final MenuListController _controller = MenuListController(repository: widget.services.menu)
+    ..load();
 
   @override
   void dispose() {
@@ -70,7 +72,15 @@ class _MenuViewState extends State<MenuView> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(_controller.loading ? '' : _controller.countLabel, style: AppText.small),
+                                if (_controller.loading)
+                                  const Shimmer(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 3),
+                                      child: SkeletonLine(width: 54, height: 11),
+                                    ),
+                                  )
+                                else
+                                  Text(_controller.countLabel, style: AppText.small),
                                 const SizedBox(height: 2),
                                 Text('Your menu', style: AppText.title),
                               ],
@@ -95,15 +105,7 @@ class _MenuViewState extends State<MenuView> {
               if (_controller.loading)
                 const SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: Shapes.side),
-                  sliver: SliverToBoxAdapter(
-                    child: Row(
-                      children: [
-                        Expanded(child: Skeleton(height: 190)),
-                        SizedBox(width: Shapes.gap),
-                        Expanded(child: Skeleton(height: 190)),
-                      ],
-                    ),
-                  ),
+                  sliver: SliverToBoxAdapter(child: _MenuGridSkeleton()),
                 )
               else if (_controller.products.isEmpty)
                 SliverPadding(
@@ -137,6 +139,53 @@ class _MenuViewState extends State<MenuView> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// Four cards in the same grid as the real menu, so nothing moves when it loads.
+class _MenuGridSkeleton extends StatelessWidget {
+  const _MenuGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: Shapes.gap,
+        crossAxisSpacing: Shapes.gap,
+        childAspectRatio: 0.86,
+      ),
+      children: const [
+        _MenuCardSkeleton(),
+        _MenuCardSkeleton(),
+        _MenuCardSkeleton(),
+        _MenuCardSkeleton(),
+      ],
+    );
+  }
+}
+
+class _MenuCardSkeleton extends StatelessWidget {
+  const _MenuCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      padding: EdgeInsets.all(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SkeletonCircle(size: 96),
+          SizedBox(height: 16),
+          SkeletonLine(width: 92, height: 14),
+          SizedBox(height: 8),
+          SkeletonLine(width: 64, height: 11),
+        ],
       ),
     );
   }

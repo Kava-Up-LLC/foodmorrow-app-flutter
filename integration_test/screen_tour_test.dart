@@ -61,7 +61,10 @@ void main() {
 
     await tapAndHold(tester, find.bySemanticsLabel('Orders'), 'ORDERS');
     await tapAndHold(
-        tester, find.bySemanticsLabel(RegExp('^${Dates.long(Dates.tomorrow())}')), 'ORDERS tomorrow');
+      tester,
+      find.bySemanticsLabel(RegExp('^${Dates.long(Dates.tomorrow())}')),
+      'ORDERS tomorrow',
+    );
     await tapAndHold(tester, find.text('Sofía Ramos'), 'ORDER DETAILS');
     await tapAndHold(tester, find.bySemanticsLabel('Back'), 'ORDERS again');
 
@@ -96,7 +99,12 @@ Future<void> seedIfEmpty(AppServices services) async {
   for (final order in [
     ('Laura Méndez', {'Cookies': 12, 'Chocolate cake': 1}, tomorrow, null),
     ('Pedro Ruiz', {'Cookies': 24}, tomorrow, null),
-    ('Sofía Ramos', {'Cookies': 12, 'Chocolate cake': 2, 'Lasagna': 1}, tomorrow, 'Birthday, no nuts'),
+    (
+      'Sofía Ramos',
+      {'Cookies': 12, 'Chocolate cake': 2, 'Lasagna': 1},
+      tomorrow,
+      'Birthday, no nuts',
+    ),
     ('Marta Gil', {'Brownies': 6, 'Lasagna': 1}, today, null),
     ('Jorge Paz', {'Cookies': 12}, today, null),
   ]) {
